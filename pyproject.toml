@@ -18,3 +18,5 @@ packages=['kaizen']
 [project.scripts]
 kz="kaizen.kz:main"
 kza-echo="kaizen.agents.echo:main"
+kza-fortune="kaizen.agents.fortune:main"
+kza-send="kaizen.agents.send:main"
