@@ -1,0 +1,56 @@
+Ether
+    A medium for exchanging messages
+
+Channels
+    An addressing mechanism: prod, debug
+
+Routers
+    Agents use Routers to obtain messages from the Ether
+    Routers may use various criteria to forward messages to agents based on agent id, sender id, some sort of aggregation, etc.
+
+Agents
+    Senders and consumers of messages, place messages onto channels, and read from channels.
+
+WorkflowAgent
+    Produces inputs and waits for outputs, aka interacts with the world.
+    Determines the beginning and end of traces.
+
+Postings
+    Long-lived Data independent of any message
+    Used to maintain global state or agent's local state
+
+AsyncMessage
+    Opaque, asynchronous delivery
+
+    One-to-Many, with no notion of replies
+
+    Has Sources [other messages], and Attachments
+
+    A message is active if there is no message that marks it as a source, and it is not a TerminatingMessage.
+
+    Messages can have an expiry time.
+
+
+Attachments
+
+    Blobs
+    ResourceConstraints
+    ResourceConsumption
+    Directory
+
+ Read -> can return a RouterShutdown message which requires the agent to re-acquire the router.
+
+Trace
+    A DAG of messages, though unsure which message will have multiple sources.
+
+    Traces are active/inactive.  Messages in inactive traces are not readable.
+
+    Traces can be re-done
+
+-- test apps
+
+ping pong
+
+semantics workbench
+
+distributed autotuning

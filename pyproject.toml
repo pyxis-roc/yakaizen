@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name="kaizen"
+version="0.1"
+requires-python=">= 3.9"
+authors = [
+        {name="Sreepathi Pai", email="sree@cs.rochester.edu"},
+]
+description="A framework for agent-based workflows."
+license="MIT"
+
+[tool.setuptools]
+packages=['kaizen']
+
+[project.scripts]
+kz="kaizen.kz:main"
+kza-echo="kaizen.agents.echo:main"
