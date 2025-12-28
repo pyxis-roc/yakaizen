@@ -9,10 +9,15 @@ class EchoAgent(SimpleAgent):
     name = AGENT
     description = "Echo Agent, just echoes the contents of each message."
 
-    def run(self):
-        for msg in self.ether.recv(self.in_channel, None, ('Ping',)):
-            reply = AsyncMessage(self.out_channel, 'Echo', self, 'Echo ' + msg.contents, [], msg.trace)
-            self.ether.send(reply)
+    def get_recv_args(self):
+        return (self.in_channel, # channel
+                None, # trace, None means all active traces
+                ('Ping',) # tuple of message types
+        )
+
+    def handle_message(self, message):
+        return AsyncMessage(self.out_channel, 'Echo', self, 'Echo ' + message.contents,
+                            [], message.trace)
 
 def main():
     agent = EchoAgent()

@@ -63,6 +63,20 @@ class SimpleAgent(Agent):
         self.start(ether, channels)
         return True
 
+    def get_recv_args(self):
+        """Return a tuple containing the arguments to ether.recv"""
+        raise NotImplementedError
+
+    def handle_message(self, message):
+        raise NotImplementedError
+
+    def run(self):
+        ra = self.get_recv_args()
+        for msg in self.ether.recv(*ra):
+            out = self.handle_message(msg)
+            if out is not None:
+                self.ether.send(out)
+
 class SimpleWorkflowAgent(WorkflowAgent):
     def inject_args(self, parser):
         AgentHelper.inject_kz_args(parser)
