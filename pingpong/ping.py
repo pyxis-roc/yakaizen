@@ -4,14 +4,15 @@ import sys
 import datetime
 
 from kaizen.core import WorkflowAgent, AsyncMessage
-from kaizen.agent import AgentHelper as AH
+from kaizen.agent import SimpleWorkflowAgent, agent_main
 
 DUR_5MIN = datetime.timedelta(minutes=5)
 
 AGENT = 'kza-ping'
 
-class PingAgent(WorkflowAgent):
+class PingAgent(SimpleWorkflowAgent):
     name = AGENT
+    description = "Ping workflowagent, sends message to be echo'ed"
 
     def run_interactive(self):
         msg = AsyncMessage(self.out_channel, 'Ping', self,
@@ -22,7 +23,7 @@ class PingAgent(WorkflowAgent):
 
         for msg in self.ether.recv(self.in_channel, trace, ('Echo',)):
             print(msg.contents)
-            no = int(msg.contents[len('ping '):])
+            no = int(msg.contents[len('Echo ping '):])
             replymsg = AsyncMessage(self.out_channel, 'Ping', self,
                                     f'ping {no+1}', [], trace)
 
@@ -31,27 +32,8 @@ class PingAgent(WorkflowAgent):
         self.ether.end_trace(trace)
 
 def main():
-    import argparse
-
-    p = argparse.ArgumentParser(description="Ping WorkflowAgent, sends message to be echo'ed")
-    AH.inject_kz_args(p)
-
-    args = p.parse_args()
-
-    ether = AH.get_ether(AGENT, args)
-    if ether is None:
-        sys.exit(1)
-
-    channels = AH.get_channels(AGENT, ether, args)
-    if channels is None:
-        print("channel setup failed.")
-        sys.exit(1)
-
-    AH.init_message(AGENT, ether, channels)
-
     agent = PingAgent()
-    agent.start(ether, channels)
-    agent.run_interactive()
+    agent_main(agent, agent.run_interactive)
 
 if __name__ == "__main__":
     main()
