@@ -16,7 +16,7 @@ class EchoAgent(SimpleAgent):
         )
 
     def handle_message(self, message):
-        return AsyncMessage(self.out_channel, 'Echo', self, 'Echo ' + message.contents,
+        return AsyncMessage(self.out_channel, 'Echo', self, 'Echo ' + (message.contents if message.contents is not None else 'empty'),
                             [], message.trace)
 
 def main():
