@@ -3,7 +3,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name="kaizen"
+name="yakaizen"
 version="0.1"
 requires-python=">= 3.9"
 authors = [
@@ -13,10 +13,10 @@ description="A framework for agent-based workflows."
 license="MIT"
 
 [tool.setuptools]
-packages=['kaizen']
+packages=['yakaizen']
 
 [project.scripts]
-kz="kaizen.kz:main"
-kza-echo="kaizen.agents.echo:main"
-kza-fortune="kaizen.agents.fortune:main"
-kza-send="kaizen.agents.send:main"
+kz="yakaizen.kz:main"
+kza-echo="yakaizen.agents.echo:main"
+kza-fortune="yakaizen.agents.fortune:main"
+kza-send="yakaizen.agents.send:main"
