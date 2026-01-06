@@ -3,8 +3,8 @@
 import sys
 import datetime
 
-from kaizen.core import WorkflowAgent, AsyncMessage
-from kaizen.agent import SimpleWorkflowAgent, agent_main
+from yakaizen.core import WorkflowAgent, AsyncMessage
+from yakaizen.agent import SimpleWorkflowAgent, agent_main
 
 DUR_5MIN = datetime.timedelta(minutes=5)
 

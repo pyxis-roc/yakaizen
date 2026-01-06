@@ -1,8 +1,8 @@
 import sys
 
-from kaizen.core import Agent, AsyncMessage
-from kaizen.agent import SimpleAgent, agent_main
-from kaizen.utils.runner import run
+from yakaizen.core import Agent, AsyncMessage
+from yakaizen.agent import SimpleAgent, agent_main
+from yakaizen.utils.runner import run
 
 AGENT = 'kza-fortune'
 
@@ -22,9 +22,9 @@ class FortuneAgent(SimpleAgent):
             message = rr.output
         else:
             if rr.exception:
-                message = 'Failed with {rr.exception}'
+                message = f'Failed with {rr.exception}'
             else:
-                message = 'Fortune failed with {rr.errors}'
+                message = f'Fortune failed with {rr.errors}'
 
         reply = AsyncMessage(self.out_channel, 'Fortune', self, message, [], msg.trace)
         return reply

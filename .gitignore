@@ -1,4 +1,6 @@
 venv
 *.db
 TODO.txt
+__pycache__
+*.egg-info
 

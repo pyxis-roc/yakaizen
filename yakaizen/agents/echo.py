@@ -1,7 +1,7 @@
 import sys
 
-from kaizen.core import Agent, AsyncMessage
-from kaizen.agent import SimpleAgent, agent_main
+from yakaizen.core import Agent, AsyncMessage
+from yakaizen.agent import SimpleAgent, agent_main
 
 AGENT = 'kza-echo'
 

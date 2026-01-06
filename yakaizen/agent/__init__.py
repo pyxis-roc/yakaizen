@@ -1,7 +1,7 @@
 import sys
-import kaizen.ether_sqlite as ethsqlite
-from kaizen.core import CHANNEL_PROD, CHANNEL_DEBUG, Channel
-from kaizen.core import Agent, WorkflowAgent
+import yakaizen.ether_sqlite as ethsqlite
+from yakaizen.core import CHANNEL_PROD, CHANNEL_DEBUG, Channel
+from yakaizen.core import Agent, WorkflowAgent
 
 
 class AgentHelper:
