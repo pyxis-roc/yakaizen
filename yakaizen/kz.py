@@ -56,7 +56,7 @@ def do_run_agent(args):
         sys.exit(1)
 
     if not is_all:
-        for a in args.agents:
+        for a in args.agent:
             if a not in agents:
                 print(f"ERROR: {args.agent} not found in config: agents={':'.join(agents)}")
                 sys.exit(1)
@@ -84,6 +84,10 @@ def do_run_agent(args):
             pass
 
 def load_config(config):
+    if not config.exists():
+        print(f"ERROR: {config} does not exist")
+        sys.exit(1)
+        
     cfg = configparser.ConfigParser()
     cfg.read(config)
     return cfg
