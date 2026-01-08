@@ -20,3 +20,5 @@ kz="yakaizen.kz:main"
 kza-echo="yakaizen.agents.echo:main"
 kza-fortune="yakaizen.agents.fortune:main"
 kza-send="yakaizen.agents.send:main"
+kz-proxy="yakaizen.ether_proxy:main"
+

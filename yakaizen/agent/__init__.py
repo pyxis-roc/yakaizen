@@ -1,8 +1,11 @@
 import sys
 import yakaizen.ether_sqlite as ethsqlite
+import yakaizen.ether_proxy as ethproxy
 from yakaizen.core import CHANNEL_PROD, CHANNEL_DEBUG, Channel
 from yakaizen.core import Agent, WorkflowAgent
 
+ETHERS = {'sqlite': ethsqlite.SQLiteEther,
+          'proxy': ethproxy.ProxyEther}
 
 class AgentHelper:
     def __init__(self):
@@ -10,7 +13,7 @@ class AgentHelper:
 
     @staticmethod
     def inject_kz_args(args):
-        args.add_argument("--kz-ether", help="Kaizen Ether specification")
+        args.add_argument("--kz-ether", help="Kaizen Ether specification", choices=ETHERS.keys())
         args.add_argument("--kz-ether-args", help="Kaizen ether arguments")
         args.add_argument("--kz-cin", help="Kaizen input channel")
         args.add_argument("--kz-cout", help="Kaizen output channel, should not used except in special circumstances")
@@ -21,7 +24,7 @@ class AgentHelper:
             print(f"{agent}:ERROR: No ether specified.", file=sys.stderr)
             return None
 
-        if args.kz_ether != 'sqlite':
+        if args.kz_ether not in ETHERS.keys():
             print(f"{agent}:ERROR: ether {args.kz_ether} is not recognized.", file=sys.stderr)
             return None
 
@@ -31,6 +34,14 @@ class AgentHelper:
                 return None
 
             return ethsqlite.SQLiteEther(args.kz_ether_args)
+        elif args.kz_ether == 'proxy':
+            if args.kz_ether_args is None:
+                print(f"{agent}:ERROR: ether proxy requires a dialing address as argument.", file=sys.stderr)
+                return None
+
+            return ethproxy.ProxyEther(args.kz_ether_args)
+        else:
+            raise NotImplementedError
 
     @staticmethod
     def get_channels(agent, ether, args):

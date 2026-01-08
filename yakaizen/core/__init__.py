@@ -77,7 +77,12 @@ class AsyncMessage:
     def __init__(self, channel, type_, sender, contents, sources, trace, *args, **kwargs):
         self.channel = channel
         self.type_ = type_
-        self.sender = sender
+
+        if isinstance(sender, str):
+            self.sender = sender
+        else:
+            self.sender = sender.name
+
         self.contents = contents
         self.trace = trace
         self.attachments = []

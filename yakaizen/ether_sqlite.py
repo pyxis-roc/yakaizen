@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS postings (id INTEGER PRIMARY KEY, name TEXT UNIQUE, t
 
         cur = conn.cursor()
         cur.execute('INSERT INTO messages (channel, type, sender, contents, has_attachments, sent, trace_id, starts_trace) VALUES (?,?,?,?,?,?,?,?)',
-                    (msg.channel.name, msg.type_, msg.sender.name, msg.contents,
+                    (msg.channel.name, msg.type_, msg.sender, msg.contents,
                      len(msg.attachments) > 0,
                      datetime.datetime.utcnow(),
                      msg.trace.trace_id, False))
@@ -103,7 +103,7 @@ CREATE TABLE IF NOT EXISTS postings (id INTEGER PRIMARY KEY, name TEXT UNIQUE, t
 
     # TODO: recv header to only get headers of messages retrieving bodies and attachments later
     # TODO: support NOT IN
-    def recv(self, channel, trace, msg_types, sender_set = None):
+    def recv(self, channel, trace, msg_types, sender_set = None, blocking = True, _start = None):
         traces_cache = {}
 
         def build_in_set(x):
@@ -166,7 +166,7 @@ CREATE TABLE IF NOT EXISTS postings (id INTEGER PRIMARY KEY, name TEXT UNIQUE, t
         cur = None
 
         #TODO: possibly make this the oldest active trace?
-        values['start'] = datetime.datetime.utcnow()
+        values['start'] = _start or datetime.datetime.utcnow()
         try:
             while True:
                 rows = []
@@ -183,7 +183,10 @@ CREATE TABLE IF NOT EXISTS postings (id INTEGER PRIMARY KEY, name TEXT UNIQUE, t
                     # race conditions here ...
                     values['start'] = rows[-1]._sent
 
-                time.sleep(1) # TODO: need to turn this into a notification instead of polling.
+                if blocking:
+                    time.sleep(1) # TODO: need to turn this into a notification instead of polling.
+                else:
+                    break
         except KeyboardInterrupt:
             print("Detected CTRL+C, shutting down recv loop")
 

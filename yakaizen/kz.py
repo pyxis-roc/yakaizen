@@ -87,7 +87,7 @@ def load_config(config):
     if not config.exists():
         print(f"ERROR: {config} does not exist")
         sys.exit(1)
-        
+
     cfg = configparser.ConfigParser()
     cfg.read(config)
     return cfg
