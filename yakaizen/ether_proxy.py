@@ -23,11 +23,9 @@ class SQLiteProxyEther(Ether):
         self.listen_addr = listen_addr
 
     def _dispatch(self, cmd):
-        print('dispatch', cmd.cmd)
         if cmd.cmd == 'recv':
             p = _decode(cmd.payload)
             rv = list(self.ethsq.recv(*p['args'], **p['kwargs'], blocking=False))
-            if len(rv): print(len(rv))
             return CMD('ret', rv)
         elif cmd.cmd == 'send':
             p = _decode(cmd.payload)
@@ -35,24 +33,40 @@ class SQLiteProxyEther(Ether):
             return CMD('ret', p['args'][0].message_id)
         elif cmd.cmd == 'begin_trace':
             p = _decode(cmd.payload)
+            msg = p['args'][1]
             ret = self.ethsq.begin_trace(*p['args'], **p['kwargs'])
-            print("ret value for begin_trace", ret)
-            return CMD('ret', ret)
+            return CMD('ret', (ret, msg.message_id))
+        elif cmd.cmd == 'end_trace':
+            p = _decode(cmd.payload)
+            self.ethsq.end_trace(*p['args'], **p['kwargs'])
+            return CMD('ret', None)
         else:
             print("Unhandled ", cmd.cmd)
             return CMD('ret', None)
 
     def run_proxy(self):
         with pynng.Rep0(listen=self.listen_addr) as rep:
-            while True:
-                pcmd = rep.recv()
-                cmd = pickle.loads(pcmd)
-                if isinstance(cmd, CMD):
-                    ret = self._dispatch(cmd)
-                    assert ret is not None
-                    rep.send(pickle.dumps(ret))
-                else:
-                    print(f"ERROR: received {type(cmd)}, expected {type(CMD)}")
+            try:
+                while True:
+                    pcmd = rep.recv()
+                    cmd = pickle.loads(pcmd)
+                    if isinstance(cmd, CMD):
+                        ret = self._dispatch(cmd)
+                        assert ret is not None
+                        rep.send(pickle.dumps(ret))
+                    else:
+                        print(f"ERROR: received {type(cmd)}, expected {type(CMD)}")
+            except KeyboardInterrupt:
+                print("Received CTRL+C, shutting down proxy")
+
+
+
+def check_ret(ret, src):
+    if not isinstance(ret, CMD) or ret.cmd != 'ret':
+        print(f"ERROR: received malformed return value for {src}", ret)
+        return False
+
+    return True
 
 class ProxyEther(Ether):
     def __init__(self, dial_addr, *args, **kwargs):
@@ -60,52 +74,57 @@ class ProxyEther(Ether):
         self.proxy = pynng.Req0(dial=dial_addr)
 
     def send(self, msg):
-        print('sending', msg)
         self.proxy.send(_encode('send', msg))
         ret = pickle.loads(self.proxy.recv())
-        if not isinstance(ret, CMD) and ret.cmd != 'ret':
-            print(f"ERROR: received malformed return value for send", ret)
-            return None
 
         msg.message_id = ret.payload
 
     def begin_trace(self, name, msg, duration):
         self.proxy.send(_encode('begin_trace', name, msg, duration))
         ret = pickle.loads(self.proxy.recv())
-        if not isinstance(ret, CMD) and ret.cmd != 'ret':
-            print(f"ERROR: received malformed return value for begin_trace", ret)
+
+        if not check_ret(ret, 'begin_trace'):
             return None
-        return ret.payload
+
+        msg.message_id = ret.payload[1]
+        return ret.payload[0]
 
     def end_trace(self, trace):
-        print('ending trace')
         self.proxy.send(_encode('end_trace', trace))
-        ret = self.proxy.recv()
+        ret = pickle.loads(self.proxy.recv())
+        if not check_ret(ret, 'end_trace'):
+            return None
+
+        trace.active = False
 
     def recv(self, channel, trace, msg_types, sender_set = None, blocking = True):
         start = datetime.datetime.utcnow()
-        while True:
-            self.proxy.send(_encode('recv', channel, trace,
-                                    msg_types, sender_set=sender_set,
-                                    _start = start))
+        try:
+            while True:
+                self.proxy.send(_encode('recv', channel, trace,
+                                        msg_types, sender_set=sender_set,
+                                        _start = start))
 
-            ret = pickle.loads(self.proxy.recv())
-            if not isinstance(ret, CMD) and ret.cmd != 'ret':
-                print(f"ERROR: received malformed return value for recv", ret)
-                continue
+                ret = pickle.loads(self.proxy.recv())
+                if not check_ret(ret, 'recv'):
+                    continue # ignore malformed messages
 
-            for r in ret.payload:
-                yield r
+                for r in ret.payload:
+                    yield r
 
-            if len(ret.payload):
-                start = ret.payload[-1]._sent
+                if len(ret.payload):
+                    start = ret.payload[-1]._sent
 
-            if blocking:
-                time.sleep(1) # TODO: need to turn this into a notification instead of polling.
-            else:
-                break
+                if blocking:
+                    time.sleep(1) # TODO: need to turn this into a notification instead of polling.
+                else:
+                    break
+        except KeyboardInterrupt:
+            print("Detected CTRL+C, shutting down recv loop")
 
 def main():
+    import argparse
+
     listen_addr = 'tcp://127.0.0.1:9999'
     db = 'test.db'
 
