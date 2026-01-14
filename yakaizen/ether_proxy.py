@@ -122,13 +122,33 @@ class ProxyEther(Ether):
         except KeyboardInterrupt:
             print("Detected CTRL+C, shutting down recv loop")
 
+ProxyableEthers = {'sqlite': SQLiteProxyEther}
+
 def main():
     import argparse
 
-    listen_addr = 'tcp://127.0.0.1:9999'
-    db = 'test.db'
+    p = argparse.ArgumentParser(description='Start a Kaizen proxy server')
+    p.add_argument('--kz-ether', help='Proxy to this ether', choices=ProxyableEthers.keys())
+    p.add_argument('--kz-ether-args', help='Arguments for ether')
+    p.add_argument('listen_addr', nargs='?', default='tcp://127.0.0.1:43789/')
 
-    srv = SQLiteProxyEther(listen_addr, db)
+    args = p.parse_args()
+
+    if args.kz_ether is None:
+        print("ERROR: --kz_ether required")
+        sys.exit(1)
+
+    if args.kz_ether is None:
+        print("ERROR: Sqlite ether requires database as argument")
+        sys.exit(1)
+
+
+    listen_addr = args.listen_addr
+    db = args.kz_ether_args
+
+    print(f"Listening on {args.listen_addr} and proxying to {args.kz_ether}/{args.kz_ether_args}")
+    print("Use CTRL+C or CTRL+\ to quit")
+    srv = ProxyableEthers[args.kz_ether](listen_addr, db)
     srv.run_proxy()
 
 if __name__ == "__main__":
