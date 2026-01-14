@@ -9,21 +9,34 @@ import subprocess
 def start_agent(agent, config, args):
     print(f"Starting {agent}")
 
-    # initial version, assume agent is a direct command
-    cmd = shutil.which(agent)
+    agent_section = f'agent:{agent}'
+    is_complete = False
+    cmd = None
+
+    if config.has_section(agent_section):
+        cmd = config.get(agent_section, 'cmd', fallback=None)
+        is_complete = True
+
+    if cmd is None:
+        cmd = shutil.which(agent)
+
     if cmd is None:
         print(f"ERROR: Agent {agent} is not a runnable command.")
         return False
 
-    # construct standard command line
-    ether = config['workflow-config']['ether']
-    kz_ether_arg = args.kz_ether_arg
+    if not is_complete:
+        # construct standard command line
+        ether = config['workflow-config']['ether']
+        kz_ether_arg = args.kz_ether_arg
 
-    cmdline = [cmd, '--kz-ether', ether]
-    if kz_ether_arg is not None:
-        cmdline.extend(['--kz-ether-arg', kz_ether_arg])
+        cmdline = [cmd, '--kz-ether', ether]
+        if kz_ether_arg is not None:
+            cmdline.extend(['--kz-ether-arg', kz_ether_arg])
+    else:
+        cmdline = shlex.split(cmd)
 
     try:
+        print("Running ", shlex.join(cmdline))
         p = subprocess.Popen(cmdline, close_fds = True)
         return p
     except OSError as e:
@@ -61,7 +74,7 @@ def do_run_agent(args):
                 print(f"ERROR: {args.agent} not found in config: agents={':'.join(agents)}")
                 sys.exit(1)
 
-        agents = agents.intersection(set(args.agents))
+        agents = agents.intersection(set(args.agent))
 
     processes = []
     for a in agents:
@@ -76,12 +89,22 @@ def do_run_agent(args):
         else:
             processes.append((a, p))
 
+    print("Waiting")
     for a, p in processes:
         try:
             p.wait()
             print(a, "terminated")
         except KeyboardInterrupt:
-            pass
+            print("Detected CTRL+C, shutting down agents")
+            for (a, p) in processes:
+                p.terminate()
+
+            print("Waiting for processes to end")
+            for (a, p) in processes:
+                p.wait()
+
+            break
+
 
 def load_config(config):
     if not config.exists():
