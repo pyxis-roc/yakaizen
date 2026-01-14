@@ -126,6 +126,7 @@ ProxyableEthers = {'sqlite': SQLiteProxyEther}
 
 def main():
     import argparse
+    import sys
 
     p = argparse.ArgumentParser(description='Start a Kaizen proxy server')
     p.add_argument('--kz-ether', help='Proxy to this ether', choices=ProxyableEthers.keys())
@@ -147,7 +148,7 @@ def main():
     db = args.kz_ether_args
 
     print(f"Listening on {args.listen_addr} and proxying to {args.kz_ether}/{args.kz_ether_args}")
-    print("Use CTRL+C or CTRL+\ to quit")
+    print("Use CTRL+C or CTRL+\\ to quit")
     srv = ProxyableEthers[args.kz_ether](listen_addr, db)
     srv.run_proxy()
 
