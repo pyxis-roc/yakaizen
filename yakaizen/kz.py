@@ -6,6 +6,29 @@ import shutil
 import shlex
 import subprocess
 
+def start_proxies(config):
+    hosts = config.get('proxy', 'hosts', fallback='')
+
+    hosts = hosts.split(',')
+
+    processes = []
+    for host in hosts:
+        print(host)
+        host, port = host.split(":", maxsplit=1)
+        assert port is not None
+
+        cmdline = ['/usr/bin/ssh', '-R', f'{port}:localhost:{port}', '-N', host]
+
+        try:
+            print("Running ", shlex.join(cmdline))
+            p = subprocess.Popen(cmdline, close_fds = True)
+            processes.append((f'proxy-{host}', p))
+        except OSError as e:
+            print(e, file=sys.stderr)
+            return processes
+
+    return processes
+
 def start_agent(agent, config, args):
     print(f"Starting {agent}")
 
@@ -44,6 +67,26 @@ def start_agent(agent, config, args):
         return None
 
     return None
+
+def do_start_proxies(args):
+    cfg = load_config(args.config)
+    processes = start_proxies(cfg)
+
+    print("Waiting")
+    for a, p in processes:
+        try:
+            p.wait()
+            print(a, "terminated")
+        except KeyboardInterrupt:
+            print("Detected CTRL+C, shutting down agents")
+            for (a, p) in processes:
+                p.terminate()
+
+            print("Waiting for processes to end")
+            for (a, p) in processes:
+                p.wait()
+
+            break
 
 def do_run_agent(args):
     cfg = load_config(args.config)
@@ -151,6 +194,8 @@ def main():
     ra.add_argument("agent", nargs="+", help="Agents to run, 'all' for all agents in config")
     ra.add_argument("--kz-ether-arg", help="--kz-ether-arg to pass to agent")
 
+    spro = sp.add_parser("start-proxies")
+
     rw = sp.add_parser('run-workflow', help="Run the workflow agent from a config")
     rw.add_argument("args", nargs='+', help='Arguments to pass to workflow agent')
 
@@ -160,6 +205,8 @@ def main():
         do_create_config(args)
     elif args.cmd == "run-agent":
         do_run_agent(args)
+    elif args.cmd == "start-proxies":
+        do_start_proxies(args)
     else:
         print(f"ERROR: Not implemented {args.cmd}")
 
