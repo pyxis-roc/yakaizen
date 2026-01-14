@@ -104,10 +104,39 @@ Failed with [Errno 2] No such file or directory: 'fortune'
 Note `kza-send` and `kza-fortune` need to be shutdown using CTRL+C.
 
 
+# Proxy-ing Agent Communication
+
+Yakaizen supports running agents on different computers when using the
+`sqlite` ether. On the machine where the database is stored, run the
+`kz-proxy` command. This is the proxy server.
+
+On the remote machine, start the agent using the `proxy`
+ether. Specify the server's listening address as the ether's
+arguments.
+
+The `proxy` ether uses `nng` under the hood. This is very reliable and
+will resend messages if the connection is broken. This may cause
+duplicate messages.
+
+## Using SSH for secure connections.
+
+By default, the `kz-proxy` listens on a localhost address. You can use
+SSH to proxy the remote agent's request securely over the network.
+
+On the server, assuming you're using the default server listening address:
+
+```
+kz-proxy ...
+ssh -R 43789:127.0.0.1:43789 -N user@host
+```
+
+Then on `host`, run the agent and provide `tcp://127.0.0.1:43789` as
+usual. The communication will now happen securely over the SSH connection.
+
+
 ## Roadmap
 
 - Trace expiration
-- Implement a proxy to allow distributed agents.
 - Implement attachments to messages
 - Implement an interactive trace viewer for debugging
 - Implement message aggregators
